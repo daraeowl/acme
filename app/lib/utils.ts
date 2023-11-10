@@ -1,6 +1,8 @@
+'use server'
 import { Revenue } from './definitions';
 
-export const formatCurrency = (amount: number) => {
+export async function createInvoice(formData: FormData){}
+export const formatCurrency = (amount: number) =>  {
   return (amount / 100).toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',

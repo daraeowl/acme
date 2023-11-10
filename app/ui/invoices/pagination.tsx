@@ -1,20 +1,56 @@
-'use client';
+"use client";
 
-import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
-import Link from 'next/link';
-import { generatePagination } from '@/app/lib/utils';
+import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import Link from "next/link";
+import { generatePagination } from "@/app/lib/utils"; // Ensure this is your actual async function
+import { usePathname, useSearchParams } from "next/navigation";
+import { useCallback, useState, useEffect } from "react";
 
 export default function Pagination({ totalPages }: { totalPages: number }) {
-  // NOTE: comment in this code when you get to this point in the course
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [allPages, setAllPages] = useState<(string | number)[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // const allPages = generatePagination(currentPage, totalPages);
+  const currentPage = Number(searchParams.get("page")) || 1;
+
+  const createPageURL = useCallback(
+    (pageNumber: { toString: () => string; }) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", pageNumber.toString());
+      return `${pathname}?${params.toString()}`;
+    },
+    [pathname, searchParams]
+  );
+
+  useEffect(() => {
+    const fetchPages = async () => {
+      try {
+        setLoading(true);
+        const pages = await generatePagination(currentPage, totalPages);
+        setAllPages(pages);
+      } catch (error) {
+        console.error("Error in generatePagination:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPages();
+  }, [currentPage, totalPages]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Replace with your loading component as needed
+  }
+
+  if (!Array.isArray(allPages)) {
+    console.error("generatePagination did not return an array", allPages);
+    return null;
+  }
 
   return (
-    <>
-      {/* NOTE: comment in this code when you get to this point in the course */}
-
-      {/* <div className="inline-flex">
+    <div className="inline-flex">
         <PaginationArrow
           direction="left"
           href={createPageURL(currentPage - 1)}
@@ -23,20 +59,19 @@ export default function Pagination({ totalPages }: { totalPages: number }) {
 
         <div className="flex -space-x-px">
           {allPages.map((page, index) => {
-            let position: 'first' | 'last' | 'single' | 'middle' | undefined;
-
-            if (index === 0) position = 'first';
-            if (index === allPages.length - 1) position = 'last';
-            if (allPages.length === 1) position = 'single';
-            if (page === '...') position = 'middle';
+             let position: 'first' | 'last' | 'single' | 'middle' | undefined;
+            if (index === 0) position = "first";
+            if (index === allPages.length - 1) position = "last";
+            if (allPages.length === 1) position = "single";
+            if (page === "...") position = "middle";
 
             return (
               <PaginationNumber
-                key={page}
+                key={page.toString()}
                 href={createPageURL(page)}
                 page={page}
                 position={position}
-                isActive={currentPage === page}
+                isActive={currentPage === Number(page)}
               />
             );
           })}
@@ -47,10 +82,10 @@ export default function Pagination({ totalPages }: { totalPages: number }) {
           href={createPageURL(currentPage + 1)}
           isDisabled={currentPage >= totalPages}
         />
-      </div> */}
-    </>
+      </div>
   );
 }
+
 
 function PaginationNumber({
   page,
